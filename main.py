@@ -34,6 +34,7 @@ classes = ['plane', 'car', 'bird', 'cat', 'deer',
 
 #Assignation of device (cpu/gpu)
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+print("Device in use:")
 print('CPU as device' if device.type == 'cpu' else 'GPU as device with CUDA')
 
 ##Definition of the model
@@ -86,6 +87,8 @@ loss_te = []
 acc_tr = []
 acc_te = []
 
+print(f"\nStarting training with {epochs} epochs\n")
+
 for epoch in range(epochs):
     model.train()
     running_loss = 0
@@ -134,15 +137,5 @@ for epoch in range(epochs):
     print(f"Epoch {epoch+1}/{epochs} | Train Loss: {avg_train_loss:.4f} | Train Acc: {train_accuracy:.4f}",
           f"| Test Loss: {avg_test_loss:.4f} | Test Acc: {test_accuracy:.4f}")
     
-#Final graphics to evaluate the results
-#Loss in train and test
-epochs_range = range(1, epochs + 1)
-plt.figure(figsize=(8, 5))
-plt.plot(epochs_range, loss_tr, label='Train Loss')
-plt.plot(epochs_range, loss_te, label='Test Loss')
-plt.xlabel('Epoch')
-plt.ylabel('Loss')
-plt.title('Train vs Test Loss')
-plt.legend()
-plt.grid(True)
-plt.show()
+print("\nTraning Finished")
+input("Press a key to continue")
