@@ -20,7 +20,7 @@ RUN pip install --upgrade pip
 RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu129
 
 # Instalar librerías adicionales útiles
-RUN pip install matplotlib numpy scikit-learn jupyterlab
+RUN pip install numpy scikit-learn
 
 # Definir directorio de trabajo
 WORKDIR /app

@@ -1,6 +1,6 @@
 import os
+from time import time
 import torch
-import matplotlib.pyplot as plt
 import torchvision.transforms as transforms
 from torchvision.datasets import CIFAR10
 from torch import nn
@@ -34,6 +34,8 @@ classes = ['plane', 'car', 'bird', 'cat', 'deer',
 
 #Assignation of device (cpu/gpu)
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+os.system("clear")
+print("")
 print("Device in use:")
 print('CPU as device' if device.type == 'cpu' else 'GPU as device with CUDA')
 
@@ -56,17 +58,14 @@ class Convolutional_CIFAR10(nn.Module):
             nn.Flatten(),
             nn.Linear(128*4*4, 1024), #Based on last features output [128,4,4]
             nn.ReLU(),
-            nn.Dropout(0.4),
+            nn.Dropout(0.6),
             nn.Linear(1024, 512),
             nn.ReLU(),
-            nn.Dropout(0.5),
+            nn.Dropout(0.6),
             nn.Linear(512, 256),
             nn.ReLU(),
             nn.Dropout(0.6),
-            nn.Linear(256, 128),
-            nn.ReLU(),
-            nn.Dropout(0.7),
-            nn.Linear(128, num_classes)
+            nn.Linear(256, num_classes)
         )
 
     def forward(self, x):
@@ -90,6 +89,7 @@ acc_te = []
 print(f"\nStarting training with {epochs} epochs\n")
 
 for epoch in range(epochs):
+    begin = time()
     model.train()
     running_loss = 0
     correct_train = 0
@@ -133,9 +133,11 @@ for epoch in range(epochs):
     test_accuracy = correct_test / total_test
     loss_te.append(avg_test_loss)
     acc_te.append(test_accuracy)
+    epoch_end = time()-begin
     #Printing results in each epoch
-    print(f"Epoch {epoch+1}/{epochs} | Train Loss: {avg_train_loss:.4f} | Train Acc: {train_accuracy:.4f}",
-          f"| Test Loss: {avg_test_loss:.4f} | Test Acc: {test_accuracy:.4f}")
+    print(f"Epoch {epoch+1}/{epochs}\n",
+          f"Train Loss: {avg_train_loss:.4f}    |   Train Accuracy: {(train_accuracy*100):.1f}%\n",
+          f"Test Loss: {avg_test_loss:.4f}      |   Test Accuracy: {(test_accuracy*100):.1f}%\n",
+          f"Time for this Epoch: {epoch_end:.2f} seconds\n")
     
 print("\nTraning Finished")
-input("Press a key to continue")
