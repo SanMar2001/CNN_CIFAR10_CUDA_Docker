@@ -20,7 +20,7 @@ RUN pip install --upgrade pip
 RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu129
 
 # Instalar librerías adicionales útiles
-RUN pip install numpy scikit-learn
+RUN pip install numpy scikit-learn docker
 
 # Definir directorio de trabajo
 WORKDIR /app
@@ -29,4 +29,4 @@ WORKDIR /app
 COPY . /app
 
 # Comando por defecto para ejecutar tu script principal
-CMD ["python", "main.py"]
+CMD ["python", "cnn.py"]
