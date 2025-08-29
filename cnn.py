@@ -24,10 +24,11 @@ testset = CIFAR10(root='./data', train=False,
 
 #Defining Dataloaders
 num_workers = os.cpu_count()
-trainloader = DataLoader(trainset, batch_size=128,
-                                          shuffle=True, num_workers=num_workers)
-testloader = DataLoader(testset, batch_size=128,
-                                         shuffle=False, num_workers=num_workers)
+
+trainloader = DataLoader(trainset, batch_size=1024,
+                                          shuffle=True, num_workers=4)
+testloader = DataLoader(testset, batch_size=1024,
+                                         shuffle=False, num_workers=4)
 
 #CIFAR10 Classes
 classes = ['plane', 'car', 'bird', 'cat', 'deer',
@@ -77,8 +78,8 @@ class Convolutional_CIFAR10(nn.Module):
 #Calling the model, loss function and optimizer
 model = Convolutional_CIFAR10(num_classes=10) #Classification of all the classes
 loss_fn = nn.CrossEntropyLoss()
-optimizer = SGD(model.parameters(), lr=0.005, momentum=0.9)
-epochs = 40
+optimizer = SGD(model.parameters(), lr=0.01, momentum=0.9)
+epochs = 50
 
 #Creating the optimization loop
 def learning_loop(epochs=epochs, 
