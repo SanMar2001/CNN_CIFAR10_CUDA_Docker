@@ -58,8 +58,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     main(args)
     if args.role == "parameter_server":
-        args.model.to(device)
-        args.model.eval()
+        model.eval()
 
         testloader = DataLoader(testset, batch_size=1024,
                                                 shuffle=False, num_workers=2)
@@ -69,7 +68,7 @@ if __name__ == "__main__":
         with torch.no_grad():
             for x_batch, y_batch in testloader:
                 x_batch, y_batch = x_batch.to(device), y_batch.to(device)
-                outputs = args.model(x_batch)
+                outputs = model(x_batch)
                 preds = outputs.argmax(dim=1)
                 correct += (preds == y_batch).sum().item()
                 total += y_batch.size(0)

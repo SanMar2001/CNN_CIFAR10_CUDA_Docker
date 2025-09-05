@@ -5,6 +5,8 @@ from torch import nn
 import pickle, asyncio
 from torch.optim import SGD
 from torch.utils.data import Subset, DataLoader
+from torchvision.transforms import transforms
+from torchvision.datasets import CIFAR10
 
 MSG_INIT = "init"
 MSG_NEXT_BATCH = "next_batch"
@@ -15,7 +17,7 @@ MSG_WORKER_DONE = "worker_done"
 
 class ParameterServer:
     def __init__(self, id, host, port, model, longitude, 
-                 epochs=20, batch_size=512, lr=0.001):
+                 epochs=40, batch_size=512, lr=0.01):
         self.id = id
         self.host = host
         self.port = port
@@ -24,7 +26,7 @@ class ParameterServer:
         self.indexes = np.random.permutation(longitude).tolist()
         self.batch_size = batch_size
         self.batch_pointer = 0
-        self.optimizer = SGD(model.parameters(), lr, momentum=0.9)
+        self.optimizer = SGD(self.model.parameters(), lr, momentum=0.9)
         self.epochs = epochs
         self.current_epoch = 0
         self.active_workers = set()
@@ -74,7 +76,8 @@ class ParameterServer:
                         batch_range = self.get_next_batch()
                         await self.send_payload(writer, {
                             "type": MSG_NEXT_BATCH,
-                            "batch_range": batch_range
+                            "batch_range": batch_range,
+                            "state_dict" : self.model.state_dict()
                         })
 
                     elif msg_type == MSG_GRADIENTS:
@@ -82,9 +85,14 @@ class ParameterServer:
                         self.optimizer.zero_grad()
                         for param, grad in zip(self.model.parameters(), grads):
                             param.grad = grad
+                        
                         self.optimizer.step()
                         
-                        await self.send_payload(writer, {"type": MSG_NEXT_BATCH})
+                        await self.send_payload(writer, {
+                            "type": MSG_NEXT_BATCH,
+                            "batch_range": self.get_next_batch(),
+                            "state_dict": self.model.state_dict()
+                        })
 
                     elif msg_type == MSG_EPOCH_DONE:
                         epoch_time = time() - self.time
@@ -92,12 +100,38 @@ class ParameterServer:
                         if self.current_epoch >= self.epochs:
                             await self.send_payload(writer, {"type": MSG_TRAINING_DONE})
                         else:
+                            '''
+                            transform = transforms.Compose([
+                                        transforms.ToTensor(),
+                                        transforms.Normalize(
+                                            mean=[0.4914, 0.4822, 0.4465],
+                                            std=[0.247, 0.243, 0.261])
+                                    ])
+                            testset = CIFAR10(root='./data', train=False,
+                                            download=True, transform=transform)
+                            self.model.eval()
+                            device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+                            testloader = DataLoader(testset, batch_size=1024,
+                                                    shuffle=False, num_workers=2)
+                            correct = 0
+                            total = 0
+                            with torch.no_grad():
+                                for x_batch, y_batch in testloader:
+                                    x_batch, y_batch = x_batch.to(device), y_batch.to(device)
+                                    outputs = self.model(x_batch)
+                                    preds = outputs.argmax(dim=1)
+                                    correct += (preds == y_batch).sum().item()
+                                    total += y_batch.size(0)
+                            
+                            print(f"Final accuracy in epoch: {((correct/total)*100):.2f}%\n")
+                            '''
                             self.reset_epoch()
                             batch_range = self.get_next_batch()
                             self.time = time()
                             await self.send_payload(writer, {
                                 "type": MSG_NEXT_BATCH,
-                                "batch_range": batch_range
+                                "batch_range": batch_range,
+                                "state_dict" : self.model.state_dict()
                             })
 
                     elif msg_type == MSG_WORKER_DONE:
@@ -173,6 +207,7 @@ class Worker:
                         print("Training finished. Closing worker")
                         return
                     else:
+                        self.model.load_state_dict(next_msg["state_dict"])
                         batch_range = next_msg.get("batch_range", (len(indexes), len(indexes)))
                         if self.model is None:
                             break
@@ -193,12 +228,20 @@ class Worker:
                     loss.backward()
 
                 grads = [param.grad.clone() for param in self.model.parameters()]
+
                 await self.send_payload(writer, {"type": MSG_GRADIENTS, "data": grads})
                 await self.recv_payload(reader)
 
                 await self.send_payload(writer, {"type": MSG_NEXT_BATCH})
                 next_msg = await self.recv_payload(reader)
+                # Si el server envía un state_dict, actualizar el modelo local
+                if "state_dict" in next_msg:
+                    self.model.load_state_dict(next_msg["state_dict"])
+                    # opcional: mover el modelo otra vez al device (por seguridad)
+                    self.model.to(self.device)
+
                 batch_range = next_msg.get("batch_range", (len(indexes), len(indexes)))
+
 
         except (asyncio.IncompleteReadError, ConnectionResetError, BrokenPipeError) as e:
             print(f"Connection lost: {e}")
@@ -238,13 +281,13 @@ class Convolutional_CIFAR10(nn.Module):
             nn.Flatten(),
             nn.Linear(128*4*4, 1024), #Based on last features output [128,4,4]
             nn.ReLU(),
-            nn.Dropout(0.6),
+            nn.Dropout(0.1),
             nn.Linear(1024, 512),
             nn.ReLU(),
-            nn.Dropout(0.6),
+            nn.Dropout(0.15),
             nn.Linear(512, 256),
             nn.ReLU(),
-            nn.Dropout(0.6),
+            nn.Dropout(0.2),
             nn.Linear(256, num_classes)
         )
 

@@ -1,8 +1,6 @@
-version: "3.8"
-services:
-  parameter_server:
+  worker2:
     build: .
-    container_name: parameter_server
+    container_name: worker2
     runtime: nvidia
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
@@ -10,14 +8,14 @@ services:
     volumes:
       - ./data:/app/data
     working_dir: /app
-    command: python main.py --role parameter_server --id 0 --host 0.0.0.0 --port 5000
+    command: python main.py --role worker --id 2 --host parameter_server --port 5000
     stdin_open: true
     tty: true
     shm_size: '2gb'
 
-  worker1:
+  worker3:
     build: .
-    container_name: worker1
+    container_name: worker3
     runtime: nvidia
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
@@ -25,9 +23,7 @@ services:
     volumes:
       - ./data:/app/data
     working_dir: /app
-    command: python main.py --role worker --id 1 --host parameter_server --port 5000
+    command: python main.py --role worker --id 3 --host parameter_server --port 5000
     stdin_open: true
     tty: true
     shm_size: '2gb'
-
-
