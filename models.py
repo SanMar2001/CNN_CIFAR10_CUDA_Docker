@@ -15,7 +15,7 @@ MSG_WORKER_DONE = "worker_done"
 
 class ParameterServer:
     def __init__(self, id, host, port, model, longitude, 
-                 epochs=50, batch_size=2048, lr=0.001):
+                 epochs=50, batch_size=2048, lr=0.004):
         self.id = id
         self.host = host
         self.port = port
