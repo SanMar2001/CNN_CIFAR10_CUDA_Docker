@@ -30,4 +30,17 @@ services:
     tty: true
     shm_size: '2gb'
 
-
+  worker2:
+    build: .
+    container_name: worker2
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
+    volumes:
+      - ./data:/app/data
+    working_dir: /app
+    command: python main.py --role worker --id 2 --host parameter_server --port 5000
+    stdin_open: true
+    tty: true
+    shm_size: '2gb'

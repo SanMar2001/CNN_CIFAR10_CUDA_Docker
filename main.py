@@ -59,7 +59,7 @@ if __name__ == "__main__":
     main(args)
     if args.role == "parameter_server":
         model.eval()
-
+        
         testloader = DataLoader(testset, batch_size=1024,
                                                 shuffle=False, num_workers=2)
         
