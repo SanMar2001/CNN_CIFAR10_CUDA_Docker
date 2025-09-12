@@ -24,7 +24,7 @@ class ParameterServer:
         self.indexes = np.random.permutation(longitude).tolist()
         self.batch_size = batch_size
         self.batch_pointer = 0
-        self.optimizer = SGD(self.model.parameters(), lr, momentum=0.9)
+        self.optimizer = SGD(self.model.parameters(), lr, momentum=0.8)
         self.epochs = epochs
         self.current_epoch = 0
         self.active_workers = set()

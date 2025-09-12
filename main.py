@@ -37,7 +37,17 @@ if __name__ == "__main__":
     parser.add_argument("--host", type=str)
     parser.add_argument("--port", type=int)
     #Defining transforms and normalization
-    transform = transforms.Compose([
+    transform_train = transforms.Compose([
+        transforms.RandomHorizontalFlip(p=0.3),
+        transforms.RandomRotation(degrees=45),
+        transforms.ToTensor(),
+        transforms.Normalize(
+            mean=[0.4914, 0.4822, 0.4465],
+            std=[0.247, 0.243, 0.261]
+        ),
+    ])
+    
+    transform_test = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize(
             mean=[0.4914, 0.4822, 0.4465],
@@ -45,9 +55,9 @@ if __name__ == "__main__":
     ])
     #Loading Dataset CIFAR10
     trainset = CIFAR10(root='./data', train=True,
-                                            download=True, transform=transform)
+                                            download=True, transform=transform_train)
     testset = CIFAR10(root='./data', train=False,
-                                        download=True, transform=transform)
+                                        download=True, transform=transform_test)
     longitude = len(trainset)
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     model = Convolutional_CIFAR10(num_classes=10) #Classification of all the classes
@@ -60,7 +70,7 @@ if __name__ == "__main__":
     if args.role == "parameter_server":
         model.eval()
         
-        testloader = DataLoader(testset, batch_size=1024,
+        testloader = DataLoader(testset, batch_size=2048,
                                                 shuffle=False, num_workers=2)
         
         correct = 0
